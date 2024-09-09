@@ -18,10 +18,7 @@ This repository contains the LAMMPS simulation files for the manuscript, _Nose-H
 ## Polyvinyl Alcohol
 ``` /pva/*  ``` <br>
 <p align="center">
-  <img alt="PVA tensile results at different strains to show void formation." src="https://github.com/Tj-Barrett/barostat-samples/blob/main/Images/PolymerVoids-Mesh.png" width="1000">
-</p>
-<p align="center">
-  <img alt="PVA tensile results under NPT, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/barostat-samples/blob/main/Images/PVA-Tensile-Comparison.png" width="600">
+  <img alt="PVA tensile results under NPT, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/barostat-samples/blob/main/Images/PolymerVoids.png" width="800">
 </p>
 
 
