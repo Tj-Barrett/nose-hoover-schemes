@@ -1,0 +1,171 @@
+
+#-----------------------------------------------------------
+# Tensile Loop
+#-----------------------------------------------------------
+label tensile_start
+variable ptmp index 10000 100000 1000000 #1000
+    #-----------------------------------------------------------
+    # Lattice Combinations
+    #-----------------------------------------------------------
+
+    # Zepeda Ruiz HKL
+    # [001] [111] [212] [112] [213] [101] [102]
+
+    # HKL plane
+    variable h equal 1
+    variable k equal 0
+    variable l equal 1
+
+    #-----------------------------------------------------------
+
+    # Simualtion Variables
+    #-----------------------------------------------------------
+    units metal
+    atom_style full
+
+    lattice fcc 4.0320
+
+    # timestep
+    variable tms equal 0.001 #ps
+
+    # [ps unit] : [10.0 1.0] [20.0 2.0] [100.0 10.0] [1000.0 100.0] [10000.0 1000.0]
+    # variable ptmp equal 10000.0 
+
+    variable tdamp equal ${tms}*1000.0 # 10 ps 
+    variable pdamp equal ${tms}*${ptmp} # 10 ps
+
+    #-----------------------------------------------------------
+    # Aluminum Inputs
+    #-----------------------------------------------------------
+    # number of aluminum atoms
+    variable al_num equal 3000000
+    # aluminum desity
+    variable al_dens equal 2.710 # g/cm^3
+    # aluminum mass
+    variable al_mass equal 26.982 # g/mol
+
+    # data input name
+    variable fname string 'Al_system'
+    # print directory
+    variable read_dir string 'Al-${h}-${k}-${l}'
+    shell mkdir ${read_dir}
+    # print directory
+    variable print_dir string 'Al-${h}-${k}-${l}-tensile-eng-nph-${ptmp}'
+    shell mkdir ${print_dir}
+
+    #-----------------------------------------------------------
+    # Simualtion Set up
+    #-----------------------------------------------------------
+    read_data ${read_dir}/Al-${h}-${k}-${l}.data
+
+    # remap to zero
+    variable xlen equal 'lx'
+    variable ylen equal 'ly'
+    variable zlen equal 'lz'
+
+    # remap to 0,0,0
+    change_box all x final 0 ${xlen} remap y final 0 ${ylen} z final 0 ${zlen} remap units box
+    change_box all triclinic
+
+    # Al system only
+    pair_style eam/alloy/gpu
+    pair_coeff * * Al_LiuXY_2004.eam.alloy Al
+
+    #-----------------------------------------------------------
+    # Set up computes
+    #-----------------------------------------------------------
+    compute temps all temp
+    # Stress/ Atom Method
+    compute SAperatom all stress/atom NULL virial
+    # average per atom. (Summing and dividing over total volume) and (averaging peratom stress then dividing by single volume) are the same
+    compute SApress all reduce sum c_SAperatom[1] c_SAperatom[2] c_SAperatom[3] c_SAperatom[4] c_SAperatom[5] c_SAperatom[6]
+    # compute pressure method
+    compute SPall all pressure NULL virial 
+
+    # fix 1 all nph y 1.01325 1.01325 ${pdamp} z 1.01325 1.01325 ${pdamp} xy 1.01325 1.01325 ${pdamp} xz 1.01325 1.01325 ${pdamp} yz 1.01325 1.01325 ${pdamp} # ~ 10-20 ps
+    fix 1 all nph x 0.0 0.0 ${pdamp} y 0.0 0.0 ${pdamp} z 0.0 0.0 ${pdamp} xy 0.0 0.0 ${pdamp} xz 0.0 0.0 ${pdamp} yz 0.0 0.0 ${pdamp} # ~ 10-20 ps
+    
+    fix 2 all langevin 300.0 300.0 ${tdamp} 6163 tally yes# ~10 ps
+
+    thermo_style custom step temp vol #v_strainx v_SA_stressxx v_SP_stressxx
+    thermo          1000
+    timestep ${tms}
+    run 100000
+
+    #-----------------------------------------------------------
+    # Run Tensile
+    #-----------------------------------------------------------
+    # strain
+    variable temps equal c_temps
+
+    variable tmpx equal "lx"
+    variable tmpy equal "ly"
+    variable tmpz equal "lz"
+
+    variable Lx0 equal ${tmpx}
+    variable Ly0 equal ${tmpy}
+    variable Lz0 equal ${tmpz}
+
+    variable sysvol equal vol
+
+    # Strain
+    variable strainx equal "(lx - v_Lx0)/v_Lx0"
+    variable strainy equal "(ly - v_Ly0)/v_Ly0"
+    variable strainz equal "(lz - v_Lz0)/v_Lz0"
+
+    variable truestrainx equal "ln(lx/v_Lx0)"
+    variable truestrainy equal "ln(ly/v_Ly0)"
+    variable truestrainz equal "ln(lz/v_Lz0)"
+
+    # sampling rate
+    variable sample_rate equal 200
+
+    compute  pe all pe
+    compute  ke all ke
+ 
+    variable ecouple equal ecouple
+    variable econserve equal econserve
+
+    variable epe equal c_pe
+    variable eke equal c_ke
+
+    # deformation rates
+    # paper uses 5*10**7
+    #  1 x / 10**-12 s == rate 
+    #  1*10**12 * 0.001 == 1*10**9 rate * timestep 
+    #  1*10**9 * etime == 5*10**7 
+    #  etime == 0.05
+    variable etime equal 1.0
+    variable erate equal ${tms}*${etime}
+
+    # stress/atom is units pressure*volume, so divide by volume, and convert bar to Pa
+    # Pressure = (N Bar*Vol) / Vol [A^3] * {1E5 Pa / 1 Bar} 
+    variable SA_stressxx equal c_SApress[1]/v_sysvol*1E5
+    variable SA_stressyy equal c_SApress[2]/v_sysvol*1E5
+    variable SA_stresszz equal c_SApress[3]/v_sysvol*1E5
+    variable SA_stressxy equal c_SApress[4]/v_sysvol*1E5
+    variable SA_stressxz equal c_SApress[5]/v_sysvol*1E5
+    variable SA_stressyz equal c_SApress[6]/v_sysvol*1E5
+
+    variable SP_stressxx equal c_SPall[1]*1E5
+    variable SP_stressyy equal c_SPall[2]*1E5
+    variable SP_stresszz equal c_SPall[3]*1E5
+    variable SP_stressxy equal c_SPall[4]*1E5
+    variable SP_stressxz equal c_SPall[5]*1E5
+    variable SP_stressyz equal c_SPall[6]*1E5
+
+    fix def1 all print ${sample_rate} "${temps} ${strainx} ${strainy} ${strainz} ${SA_stressxx} ${SA_stressyy} ${SA_stresszz} ${SA_stressxy} ${SA_stressxz} ${SA_stressyz}" file ${print_dir}/Al_NPH_hkl_${h}-${k}-${l}_Strain.${ptmp}.SA.txt screen no
+
+    fix def2 all print ${sample_rate} "${temps} ${strainx} ${strainy} ${strainz} ${epe} ${eke} ${ecouple} ${econserve}" file ${print_dir}/Al_NPH_Strain.${ptmp}.SE.txt screen no
+
+    dump 1 all custom 10000 ${print_dir}/Al_tensile_${h}-${k}-${l}.dump id type x y z c_SAperatom[1] c_SAperatom[2] c_SAperatom[3] c_SAperatom[4] c_SAperatom[5] c_SAperatom[6]
+
+    unfix 1
+    thermo_style custom step temp v_sysvol v_strainx v_SA_stressxx v_SP_stressxx econserve ecouple
+    fix 1 all nph y 0.0 0.0 ${pdamp} z 0.0 0.0 ${pdamp} xy 0.0 0.0 ${pdamp} xz 0.0 0.0 ${pdamp} yz 0.0 0.0 ${pdamp} # ~ 10-20 ps
+    fix 2 all deform 1 x erate ${erate}
+    run 1000000
+
+    clear
+next ptmp
+jump SELF tensile_start

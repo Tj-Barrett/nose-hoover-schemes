@@ -1,0 +1,110 @@
+#-----------------------------------------------------------
+# Aluminum Inputs
+#-----------------------------------------------------------
+# number of aluminum atoms
+variable al_num equal 3000000
+# aluminum desity, make excessivly dense
+variable al_dens equal 2.710 #2.710 # g/cm^3
+# aluminum mass
+variable al_mass equal 26.982 # g/mol
+
+# HKL
+variable h equal 1
+variable k equal 0
+variable l equal 1
+
+# x*a + y*b + z*c = 0
+
+variable x0 equal ${h}
+variable x1 equal ${k}
+variable x2 equal ${l}
+
+variable y0 equal 0
+variable y1 equal 1
+variable y2 equal 0
+
+variable z0 equal -1
+variable z1 equal 0
+variable z2 equal 1
+
+#-----------------------------------------------------------
+# Simualtion Set up
+#-----------------------------------------------------------
+units metal
+atom_style full
+
+# print directory
+variable print_dir string 'Al-${h}-${k}-${l}'
+# make print directory
+shell mkdir ${print_dir}
+
+#-----------------------------------------------------------
+# Precompute Box Size
+#-----------------------------------------------------------
+# density in angstroms
+variable al_dens_ang equal ${al_dens}*10.^(-24.) # g/Angstrom^3
+# total mass in grams
+variable al_mass_total equal ${al_num}*${al_mass}/(6.022*10.^(23.)) #g
+# volume
+variable al_box_volume equal ${al_mass_total}/${al_dens_ang}
+# box length
+variable al_box equal ${al_box_volume}^(1./3.)
+# rename
+variable box_edge equal ${al_box}
+
+#-----------------------------------------------------------
+# Simualtion Variables
+#-----------------------------------------------------------
+# timestep
+variable tms equal 0.01
+variable tdamp equal ${tms}*10000.0
+variable pdamp equal ${tms}*1000.0
+
+#-----------------------------------------------------------
+# Simualtion Set up
+#-----------------------------------------------------------
+units metal
+
+# doesnt actually make the box this size with random
+region box block 0.0 ${box_edge} 0.0 ${box_edge} 0.0 ${box_edge} units lattice
+create_box 1 box
+
+# type 1 is Al, use random to make sure desired crystal structure develops
+lattice fcc 4.0320 orient x ${x0} ${x1} ${x2} orient y ${y0} ${y1} ${y2} orient z ${z0} ${z1} ${z2} 
+create_atoms 1 region box
+mass 1 ${al_mass}
+
+print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+print "Running Aluminum "
+print "Al atoms : ${al_num}"
+print "Box Length Estimate: ${box_edge}"
+print " ${h} ${k} ${l}"
+print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+
+
+write_data Al-${h}-${k}-${l}-start.data
+
+# Al system only
+pair_style eam/alloy/gpu
+pair_coeff * * Al_LiuXY_2004.eam.alloy Al
+
+#-----------------------------------------------------------
+# Simualtion Set up
+#-----------------------------------------------------------
+
+thermo_style custom step temp pxx pyy pzz vol
+thermo          1000
+timestep ${tms}
+
+restart 500000 Al.*.restart
+
+dump 1 all custom 100000 ${print_dir}/Al-${h}-${k}-${l}.dump id type x y z
+neigh_modify one 3000
+
+velocity all create 300.0 129836
+
+fix	1 all nph x 0.0 0.0 ${pdamp} y 0.0 0.0 ${pdamp} z 0.0 0.0 ${pdamp}
+fix 2 all langevin 300.0 300.0 ${tdamp} 6163 # ~10 ps
+run 1000000
+
+write_data ${print_dir}/Al-${h}-${k}-${l}.data
