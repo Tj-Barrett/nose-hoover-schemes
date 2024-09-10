@@ -163,7 +163,7 @@ variable ptmp index 10000 100000 1000000 #1000
     unfix 1
     thermo_style custom step temp v_sysvol v_strainx v_SA_stressxx v_SP_stressxx econserve ecouple
     fix 1 all nph y 0.0 0.0 ${pdamp} z 0.0 0.0 ${pdamp} xy 0.0 0.0 ${pdamp} xz 0.0 0.0 ${pdamp} yz 0.0 0.0 ${pdamp} # ~ 10-20 ps
-    fix 2 all deform 1 x erate ${erate}
+    fix 3 all deform 1 x erate ${erate}
     run 1000000
 
     clear
