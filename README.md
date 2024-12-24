@@ -12,13 +12,14 @@ This repository contains the LAMMPS simulation files for the manuscript, _Nose-H
 ## Aluminum
 ``` /aluminum/*  ``` <br>
 <p align="center">
-  <img alt="Aluminum volumes under NPH, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/barostat-samples/blob/main/Images/Al%20Volumes.png" width="600">
+  <img alt="Aluminum volumes under NPH, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/nose-hoover-schemes/blob/main/Images/Al-SC-PC-Deformations.png" width="600">
+  <img alt="Aluminum volumes under NPH, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/nose-hoover-schemes/blob/main/Images/Al-Single-Crystals.png" width="600">
 </p>
 
 ## Polyvinyl Alcohol
 ``` /pva/*  ``` <br>
 <p align="center">
-  <img alt="PVA tensile results under NPT, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/barostat-samples/blob/main/Images/PolymerVoids.png" width="800">
+  <img alt="PVA tensile results under NPT, NVT, and Isochoric deformations." src="https://github.com/Tj-Barrett/nose-hoover-schemes/blob/main/Images/Rev1-pva-compare.png" width="800">
 </p>
 
 
