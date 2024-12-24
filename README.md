@@ -1,7 +1,7 @@
 # Nose-Hoover Integrators at-a-glance
 ``` doi :  ```
 
-This repository contains the LAMMPS simulation files for the manuscript, _Nose-Hoover Integrators at-a-glance : Barostat integration has a demonstrable effect on uniaxial tension results_. The three folders contain the necessary data and scripts to perform the simulations, as well as the python scripts to read and plot the data. If you find these helpful and use them for other publications, please cite this work.
+This repository contains the LAMMPS simulation files for the manuscript, _Nose-Hoover Integrators at-a-glance : Barostat integration has a demonstrable effect on uniaxial tension results of solid materials_. The three folders contain the necessary data and scripts to perform the simulations, as well as the python scripts to read and plot the data. If you find these helpful and use them for other publications, please cite this work.
 
 ## Graphene
 ``` /graphene/*  ``` <br>
